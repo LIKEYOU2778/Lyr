@@ -3,298 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aura Lyrics</title>
-    <!-- 引入 Tailwind CSS -->
+    <title>Aura Netease Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        /* 自定义样式：隐藏滚动条但保留功能 */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* 歌词遮罩效果 */
-        .lyrics-mask {
-            mask-image: linear-gradient(transparent 0%, black 20%, black 80%, transparent 100%);
-            -webkit-mask-image: linear-gradient(transparent 0%, black 20%, black 80%, transparent 100%);
+        /* 玻璃拟态效果 */
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        /* 动画 */
-        .animate-pulse-slow { animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         
-        /* 歌词高亮过渡 */
-        .lyric-line { transition: all 0.3s ease; transform-origin: center left; }
-        .lyric-active { color: #fff; font-weight: 700; font-size: 1.25rem; transform: scale(1.05); text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-        .lyric-inactive { color: rgba(255,255,255,0.4); filter: blur(0.5px); }
+        /* 动态背景动画 */
+        .animate-blob { animation: blob 7s infinite; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
     </style>
 </head>
-<body class="bg-black text-white h-screen w-screen overflow-hidden font-sans">
+<body class="bg-black text-white h-screen w-screen overflow-hidden flex flex-col items-center justify-center relative">
 
-    <!-- 登录界面 -->
-    <div id="login-view" class="hidden h-full flex flex-col items-center justify-center p-6 z-50 bg-gray-900">
-        <h1 class="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">Aura Lyrics</h1>
-        <p class="text-gray-400 mb-8 text-center">你的沉浸式 Spotify 歌词伴侣</p>
-        <button onclick="handleLogin()" class="bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold py-3 px-8 rounded-full transition-transform transform hover:scale-105 shadow-lg">
-            连接 Spotify
-        </button>
-        <p class="mt-4 text-xs text-gray-500 max-w-xs text-center">
-            注意：请确保你已在 Spotify 开发者后台将 <br>
-            <span id="current-url" class="text-gray-300 font-mono"></span> <br>
-            添加至 Redirect URIs
-        </p>
-    </div>
+    <!-- 动态背景光斑 -->
+    <div class="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+    <div class="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+    <div class="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
 
-    <!-- 播放器界面 -->
-    <div id="player-view" class="hidden relative h-full flex flex-col items-center justify-center">
-        <!-- 动态背景 -->
-        <div id="bg-layer" class="absolute inset-0 bg-cover bg-center transition-all duration-1000 opacity-40 blur-3xl scale-110 z-0"></div>
-        <div class="absolute inset-0 bg-black/30 z-0"></div>
+    <!-- 主容器 -->
+    <div class="z-10 w-full max-w-2xl px-4 flex flex-col items-center gap-6">
+        
+        <!-- 标题 -->
+        <h1 class="text-3xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500 mb-4 tracking-tight">
+            Aura Cloud
+        </h1>
 
-        <!-- 内容区域 -->
-        <div class="z-10 w-full max-w-md flex flex-col items-center h-full pt-10 pb-6 px-6">
-            
-            <!-- 专辑封面与信息 -->
-            <div class="flex flex-col items-center mb-6 shrink-0">
-                <img id="album-art" src="" class="w-48 h-48 rounded-xl shadow-2xl mb-4 animate-pulse-slow border border-white/10" alt="Album">
-                <h2 id="track-name" class="text-2xl font-bold text-center line-clamp-1 w-full px-2">等待播放...</h2>
-                <p id="artist-name" class="text-gray-300 text-sm mt-1">请在 Spotify 播放音乐</p>
-            </div>
-
-            <!-- 歌词滚动区 -->
-            <div id="lyrics-container" class="flex-1 w-full overflow-y-auto no-scrollbar lyrics-mask text-center space-y-4 scroll-smooth">
-                <!-- 歌词将在这里生成 -->
-                <p class="text-gray-500 mt-20">等待同步...</p>
-            </div>
-            
-            <!-- 退出按钮 -->
-            <button onclick="handleLogout()" class="mt-4 text-xs text-gray-400 hover:text-white underline">退出登录</button>
+        <!-- 输入区域 -->
+        <div class="w-full glass rounded-2xl p-2 flex items-center shadow-2xl transition-all duration-300 focus-within:ring-2 focus-within:ring-blue-500/50">
+            <i class="bi bi-link-45deg text-2xl text-gray-400 ml-3"></i>
+            <input 
+                type="text" 
+                id="url-input" 
+                placeholder="粘贴网易云 歌单/单曲 链接..." 
+                class="bg-transparent border-none outline-none text-white text-base w-full px-4 py-3 placeholder-gray-500"
+                onkeydown="if(event.key === 'Enter') loadPlayer()"
+            >
+            <button onclick="loadPlayer()" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 py-3 font-medium transition-colors">
+                播放
+            </button>
         </div>
+
+        <!-- 播放器嵌入区 -->
+        <div id="player-container" class="w-full h-0 opacity-0 overflow-hidden transition-all duration-700 ease-out rounded-xl shadow-2xl border border-white/5 relative">
+            <!-- 播放器将在这里生成 -->
+            <p class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-500">
+                等待加载...
+            </p>
+        </div>
+
+        <!-- 历史记录/提示 -->
+        <div class="text-gray-500 text-sm mt-4 text-center">
+            <p>支持格式示例：</p>
+            <p class="text-xs font-mono mt-1 opacity-60">https://music.163.com/#/playlist?id=123456</p>
+            <p class="text-xs font-mono opacity-60">分享链接 -> 复制链接</p>
+        </div>
+
     </div>
 
     <script>
-        // --- 配置 ---
-        const CLIENT_ID = '4be054489dd84fb092a85cdcab057c5e'; // 你的ID
-        
-        // 自动获取当前页面的 URL 作为回调地址 (去掉 # 及其后面的内容)
-        // 重要：你在 Spotify 后台填写的地址必须和这里自动获取的一模一样
-        const REDIRECT_URI = window.location.href.split('#')[0]; 
-        const SCOPES = ["user-read-currently-playing", "user-read-playback-state"];
-
-        // --- 状态变量 ---
-        let accessToken = localStorage.getItem('spotify_token');
-        let currentTrackId = null;
-        let lyricsData = [];
-        let isFetchingLyrics = false;
-        let currentProgress = 0; // ms
-        let lastFetchTime = 0;
-        let isPaused = true;
-
-        // --- 初始化 ---
-        document.getElementById('current-url').textContent = REDIRECT_URI;
-        checkAuth();
-
-        // --- 认证逻辑 ---
-        function checkAuth() {
-            // 1. 检查 URL 是否包含 Token (回调回来)
-            const hash = window.location.hash;
-            if (hash && hash.includes('access_token')) {
-                const params = new URLSearchParams(hash.substring(1));
-                accessToken = params.get('access_token');
-                localStorage.setItem('spotify_token', accessToken);
-                window.location.hash = ''; // 清理 URL
+        function loadPlayer() {
+            const input = document.getElementById('url-input').value.trim();
+            const container = document.getElementById('player-container');
+            
+            if (!input) {
+                alert("请输入链接");
+                return;
             }
 
-            // 2. 切换视图
-            if (accessToken) {
-                document.getElementById('login-view').classList.add('hidden');
-                document.getElementById('player-view').classList.remove('hidden');
-                document.getElementById('player-view').classList.add('flex');
-                startPolling();
+            // 1. 提取 ID 和 类型
+            let id = null;
+            let type = 0; // 0: 单曲, 1: 歌单 (网易云iframe参数: 2为单曲, 0为歌单, 这里需要转换)
+
+            // 尝试匹配 id=xxxx
+            const idMatch = input.match(/id=(\d+)/);
+            if (idMatch) {
+                id = idMatch[1];
             } else {
-                document.getElementById('login-view').classList.remove('hidden');
-                document.getElementById('login-view').classList.add('flex');
-                document.getElementById('player-view').classList.add('hidden');
+                // 尝试匹配 /song/xxxx 或 /playlist/xxxx
+                const pathMatch = input.match(/\/(song|playlist)\/(\d+)/);
+                if (pathMatch) {
+                    id = pathMatch[2];
+                    if (pathMatch[1] === 'song') type = 2; // 单曲
+                    if (pathMatch[1] === 'playlist') type = 0; // 歌单
+                }
             }
-        }
 
-        function handleLogin() {
-            const url = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${SCOPES.join('%20')}&response_type=token&show_dialog=true`;
-            window.location.href = url;
-        }
+            // 如果还没确定类型，根据 URL 关键词猜测
+            if (id && type === 0) { // 默认初始值
+                if (input.includes('song')) type = 2;
+                else if (input.includes('playlist')) type = 0;
+                else if (input.includes('album')) type = 1; // 专辑
+            }
 
-        function handleLogout() {
-            localStorage.removeItem('spotify_token');
-            accessToken = null;
-            location.reload();
-        }
+            if (!id) {
+                alert("无法识别链接中的 ID，请直接复制网易云的网页链接");
+                return;
+            }
 
-        // --- 核心循环 ---
-        function startPolling() {
-            // 立即执行一次
-            fetchSpotifyState();
+            // 2. 展开容器动画
+            // 网易云外链播放器高度：单曲=66 (实际上设86比较稳), 歌单=430
+            const height = (type === 2) ? 86 : 450; 
+            container.style.height = height + 'px';
+            container.style.opacity = '1';
+
+            // 3. 生成 iframe
+            // auto=1 表示自动播放，height 要和 style 对应
+            // 官方参数: type -> 2:单曲, 1:专辑, 0:歌单
+            // 注意：网易云部分版权歌曲不支持外链播放
             
-            // 每 3 秒同步一次 Spotify 状态
-            setInterval(fetchSpotifyState, 3000);
-
-            // 每 0.2 秒更新一次本地进度条和歌词滚动 (为了平滑)
-            setInterval(updateLyricsUI, 200);
-        }
-
-        async function fetchSpotifyState() {
-            if (!accessToken) return;
-
-            try {
-                const res = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-
-                if (res.status === 204) {
-                    // 没在播放
-                    return;
-                }
-                
-                if (res.status === 401) {
-                    // Token 过期
-                    handleLogout();
-                    return;
-                }
-
-                const data = await res.json();
-                
-                // 更新播放状态
-                currentProgress = data.progress_ms;
-                lastFetchTime = Date.now();
-                isPaused = !data.is_playing;
-
-                // 如果切歌了，更新界面和歌词
-                if (data.item.id !== currentTrackId) {
-                    currentTrackId = data.item.id;
-                    updateTrackInfo(data.item);
-                    fetchLyrics(data.item);
-                }
-
-            } catch (e) {
-                console.error("API Error", e);
-            }
-        }
-
-        function updateTrackInfo(track) {
-            document.getElementById('track-name').textContent = track.name;
-            document.getElementById('artist-name').textContent = track.artists.map(a => a.name).join(', ');
-            
-            const imgUrl = track.album.images[0]?.url || '';
-            document.getElementById('album-art').src = imgUrl;
-            document.getElementById('bg-layer').style.backgroundImage = `url(${imgUrl})`;
-        }
-
-        // --- 歌词处理 ---
-        async function fetchLyrics(track) {
-            const container = document.getElementById('lyrics-container');
-            container.innerHTML = '<p class="text-gray-500 mt-10">加载歌词中...</p>';
-            
-            const artist = track.artists[0].name;
-            const title = track.name;
-            const duration = track.duration_ms / 1000;
-
-            try {
-                const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}&duration=${Math.round(duration)}`;
-                const res = await fetch(url);
-                
-                if (!res.ok) throw new Error("Lyrics not found");
-                
-                const data = await res.json();
-                
-                if (data.syncedLyrics) {
-                    lyricsData = parseLrc(data.syncedLyrics);
-                    renderLyrics();
-                } else if (data.plainLyrics) {
-                    container.innerHTML = `<p class="whitespace-pre-wrap text-gray-400 leading-8 px-4">${data.plainLyrics}</p>`;
-                    lyricsData = [];
-                } else {
-                    throw new Error("No lyrics");
-                }
-
-            } catch (e) {
-                container.innerHTML = '<p class="text-gray-500 mt-10">暂无歌词 / 纯音乐</p>';
-                lyricsData = [];
-            }
-        }
-
-        function parseLrc(lrc) {
-            const lines = lrc.split('\n');
-            const result = [];
-            const regex = /^\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
-
-            lines.forEach(line => {
-                const match = line.match(regex);
-                if (match) {
-                    const min = parseInt(match[1]);
-                    const sec = parseInt(match[2]);
-                    const ms = parseInt(match[3].padEnd(3, '0'));
-                    const timeMs = (min * 60 + sec) * 1000 + ms;
-                    result.push({ time: timeMs, text: match[4].trim() });
-                }
-            });
-            return result;
-        }
-
-        function renderLyrics() {
-            const container = document.getElementById('lyrics-container');
-            container.innerHTML = '';
-            
-            // 添加顶部占位，让第一句歌词能显示在中间
-            const padTop = document.createElement('div');
-            padTop.className = 'h-[40%] w-full';
-            container.appendChild(padTop);
-
-            lyricsData.forEach((line, index) => {
-                const p = document.createElement('p');
-                p.textContent = line.text;
-                p.id = `line-${index}`;
-                p.className = 'lyric-line lyric-inactive text-sm md:text-base py-2 px-2 cursor-pointer';
-                p.onclick = () => {
-                    // (可选) 点击歌词跳转播放进度功能需要 Premium 权限和 PUT 接口，这里暂时不做
-                };
-                container.appendChild(p);
-            });
-
-            // 添加底部占位
-            const padBottom = document.createElement('div');
-            padBottom.className = 'h-[50%] w-full';
-            container.appendChild(padBottom);
-        }
-
-        function updateLyricsUI() {
-            if (lyricsData.length === 0 || isPaused) return;
-
-            // 估算当前进度
-            const now = Date.now();
-            const estimatedProgress = currentProgress + (now - lastFetchTime);
-
-            // 找到当前行
-            let activeIndex = -1;
-            for (let i = 0; i < lyricsData.length; i++) {
-                if (estimatedProgress >= lyricsData[i].time) {
-                    activeIndex = i;
-                } else {
-                    break;
-                }
-            }
-
-            if (activeIndex !== -1) {
-                // 更新样式
-                lyricsData.forEach((_, i) => {
-                    const el = document.getElementById(`line-${i}`);
-                    if (!el) return;
-                    
-                    if (i === activeIndex) {
-                        el.className = 'lyric-line lyric-active py-4'; // 当前行间距拉大
-                        
-                        // 滚动到中心
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else {
-                        el.className = 'lyric-line lyric-inactive py-2';
-                    }
-                });
-            }
+            setTimeout(() => {
+                container.innerHTML = `
+                    <iframe 
+                        frameborder="no" 
+                        border="0" 
+                        marginwidth="0" 
+                        marginheight="0" 
+                        width="100%" 
+                        height="${height}" 
+                        src="//music.163.com/outchain/player?type=${type}&id=${id}&auto=1&height=${(type===2)?66:430}">
+                    </iframe>
+                `;
+            }, 300); // 等容器展开一点再加载
         }
     </script>
 </body>
